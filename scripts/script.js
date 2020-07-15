@@ -13,8 +13,21 @@ const modalAdd = document.querySelector('.modal__add'),
     modalFileBtn = document.querySelector('.modal__file-btn'),
     modalImageAdd = document.querySelector('.modal__image-add');
 
+
+const modalImageItem = document.querySelector('.modal__image-item'),
+    modalHeaderItem = document.querySelector('.modal__header-item'),
+    modalStatusItem = document.querySelector('.modal__status-item'),
+    modalDescriptionItem = document.querySelector('.modal__description-item'),
+    modalCostItem = document.querySelector('.modal__cost-item');
+
+const searchInput = document.querySelector('.search__input'),
+    menuContainer = document.querySelector('.menu__container');    
+    
 const textFileBtn = modalFileBtn.textContent;
 const srcModalImage = modalImageAdd.src;
+
+
+let counter = dataBase.length;
 
 const elematsModalSubmit = [...modalSubmit.elements]
     .filter(elem => elem.tagName !== 'BUTTON');
@@ -43,20 +56,32 @@ const closeModal = function(event) {
     }
 };
 
-const renderCard = () => {
+const renderCard = (DB = dataBase) => {
     catalog.textContent = '';
-    dataBase.forEach((item, i) => {
+    DB.forEach((item, i) => {
         catalog.insertAdjacentHTML('beforeend', `
-            <li class="card" data-id="${i}">
+            <li class="card" data-id-item="${item.id}">
                 <img class="card__image" src="data:image/jpeg;base64,${item.image}" alt="test">
                 <div class="card__description">
                     <h3 class="card__header">${item.nameItem}</h3>
-                    <div class="card__price">${item.costItem} руб.</div>
+                    <div class="card__price">${item.costItem} ₽</div>
                 </div>
             </li>
         `);
     });
 };
+
+
+
+
+searchInput.addEventListener('input', () => {
+    const valueSearch = searchInput.value.trim().toLowerCase();
+    if (valueSearch.length > 2) {
+        const result = dataBase.filter(item => item.nameItem.toLowerCase().includes(valueSearch) ||
+                                               item.descriptionItem.toLowerCase().includes(valueSearch));
+        renderCard(result);
+    } 
+});
 
 
 modalFileInput.addEventListener('change', event => {
@@ -93,6 +118,7 @@ modalSubmit.addEventListener('submit', event => {
     for (const elem of elematsModalSubmit) {
         itemObj[elem.name] = elem.value;
     }
+    itemObj.id = counter++;
     itemObj.image = infoPhoto.base64;
     dataBase.push(itemObj);
     closeModal({target: modalAdd});
@@ -110,10 +136,30 @@ modalItem.addEventListener('click', closeModal);
 
 catalog.addEventListener('click', event => {
     const target = event.target;
+    const card = target.closest('.card');
 
-    if(target.closest('.card')) {
+    if(card) {
+        const item = dataBase.find(item => item.id === +card.dataset.idItem);
+
+
+        modalImageItem.src = `data:image/jpeg;base64,${item.image}`;
+        modalHeaderItem.textContent = item.nameItem;
+        modalStatusItem.textContent = item.status === 'new' ? 'Новый' : 'Б/У';
+        modalDescriptionItem.textContent = item.descriptionItem;
+        modalCostItem.textContent = item.costItem;
+
+
         modalItem.classList.remove('hide');
         document.addEventListener('keydown', closeModal);
+    }
+});
+
+menuContainer.addEventListener('click', event => {
+    const target = event.target;
+
+    if (target.tagName === 'A') {
+        const result = dataBase.filter(item => item.category === target.dataset.category);
+        renderCard(result);
     }
 });
 
